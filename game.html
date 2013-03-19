@@ -1,0 +1,214 @@
+<html>
+	<head>
+		<title>orbit</title>
+		<script>
+			var requestAnimFrame = (function(){
+			      return  window.requestAnimationFrame       || 
+			              window.webkitRequestAnimationFrame || 
+			              window.mozRequestAnimationFrame    || 
+			              window.oRequestAnimationFrame      || 
+			              window.msRequestAnimationFrame     || 
+			              function(callback) {
+			              		window.setTimeout(callback, 1000 / 60);
+			              };
+			})();
+
+			var GameState = {
+				ORBIT_PLACING : 1,
+				ORBIT_WINDUP : 2,
+				ORBIT_ACTIVE : 3,
+				ORBIT_FINISHED : 4
+			};
+
+			// Game variables.
+			var gameState = GameState.ORBIT_PLACING;
+			var boardDimensions = 500;
+			var mousePos = [ -20, -20 ];
+			var mouseDownPos = [ 0, 0 ];
+			var maxLength = 80;
+			var iterations = 0;
+
+			var startTime;
+
+			// Initialize the game objects.
+			var thrownObject = {
+				radius : 7,
+				pos : [ boardDimensions / 2, 20 ],
+				vel : [ 0, 0 ]
+			};
+
+			var planet = {
+				radius : 35,
+				pos : [ 0, 0 ]
+			};
+
+			var planetCenter = boardDimensions / 2 - planet.radius / 2;
+			planet.pos = [ planetCenter, planetCenter ];
+
+			function drawOrbitPosition(context, pos, radius) {
+				context.fillStyle = "#ec4343";
+				context.strokeStyle = "#00bff3";
+
+				context.beginPath();
+				context.arc(pos[0], pos[1], radius, 0, 2 * Math.PI, false);
+				context.fill();
+				context.stroke();
+			}
+
+			function length(vec) {
+				return Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
+			}
+
+			function distance(vec1, vec2) {
+				var x = vec2[0] - vec1[0];
+				var y = vec2[1] - vec1[1];
+				return length([x, y]);
+			}
+			function normalize(vec) {
+				var len = length(vec);
+				return [ vec[0] / len, vec[1] / len ];
+			}
+
+			function direction(vec1, vec2) {
+				var x = vec2[0] - vec1[0];
+				var y = vec2[1] - vec1[1];
+				return normalize([ x, y ]);
+			}
+
+			function update() {
+				if (!thrownObject) {
+					return;
+				}
+
+				var score = document.getElementById('highScore');
+				if (iterations > 5) {
+					if (gameState == GameState.ORBIT_ACTIVE) {
+						var endTime = new Date().getTime();
+						score.innerHTML = ((endTime - startTime) / 1000).toFixed(1);
+					}
+					else {
+						score.innerHTML = "0.0";
+					}
+					iterations = 0;
+				}
+				iterations++;
+
+				if (gameState == GameState.ORBIT_PLACING) {
+					thrownObject.pos = mousePos;
+				}
+				else if (gameState == GameState.ORBIT_WINDUP) {
+					thrownObject.pos = mouseDownPos;
+				}
+				else if (gameState == GameState.ORBIT_ACTIVE) {
+					var curPos = thrownObject.pos;
+					var curVel = thrownObject.vel;
+					var planetPos = planet.pos;
+
+					var dist = distance(curPos, planetPos);
+					var dir = direction(curPos, planetPos);
+					var force = 1500.0 / ((dist * dist) + 100.0);
+
+					curVel[0] += dir[0] * force;
+					curVel[1] += dir[1] * force;
+
+					curPos[0] += curVel[0];
+					curPos[1] += curVel[1];
+
+					var collideDist = distance(curPos, planetPos);
+					if (collideDist < thrownObject.radius + planet.radius) {
+						gameState = GameState.ORBIT_FINISHED;
+					}
+				}
+			}
+
+			function draw(context) {
+				context.clearRect(0, 0, boardDimensions, boardDimensions);
+
+				if (gameState == GameState.ORBIT_WINDUP) {
+					context.strokeStyle = "#ffffff";
+
+					var dir = direction(mousePos, mouseDownPos);
+					var dist = Math.min(distance(mousePos, mouseDownPos), maxLength);
+					var endPos = [ mouseDownPos[0] + dir[0] * dist, mouseDownPos[1] + dir[1] * dist ];
+
+					context.lineWidth = 3;
+					context.moveTo(mouseDownPos[0], mouseDownPos[1]);
+					context.lineTo(endPos[0], endPos[1]);
+					context.stroke();
+				}
+
+				context.fillStyle = "#ec4343";
+				context.strokeStyle = "#00bff3";
+
+				if (thrownObject) {
+					context.lineWidth = 2;
+					drawOrbitPosition(context, thrownObject.pos, thrownObject.radius);
+				}
+
+				context.lineWidth = 3;
+				drawOrbitPosition(context, planet.pos, planet.radius);
+			}
+
+			function handleMouseMove(mouseMoveEvent) {
+				var x, y;
+				if (mouseMoveEvent.layerX || mouseMoveEvent.layerX == 0) {
+					x = mouseMoveEvent.layerX;
+					y = mouseMoveEvent.layerY;
+				}
+				else if (mouseMoveEvent.offsetX || mouseMoveEvent.offsetX == 0) {
+				    x = ev.offsetX;
+				    y = ev.offsetY;
+				}
+				mousePos = [ x, y ];
+			}
+
+			function handleMouseDown() {
+				if (gameState == GameState.ORBIT_PLACING) {
+					gameState = GameState.ORBIT_WINDUP;
+					mouseDownPos = mousePos;
+				}
+			}
+
+			function handleMouseUp() {
+				var lengthScale = 0.05;
+
+				if (gameState == GameState.ORBIT_WINDUP) {
+					gameState = GameState.ORBIT_ACTIVE;
+
+					var dir = direction(mousePos, mouseDownPos);
+					var len = Math.min(distance(mousePos, mouseDownPos) * lengthScale, maxLength);
+					thrownObject.vel = [ dir[0] * len, dir[1] * len ];
+					mouseDownPos = [ 0, 0 ];
+
+					startTime = new Date().getTime();
+				}
+			}
+
+			function startGame() {
+				var canvas = document.getElementById('gameBoard');
+				var context = canvas.getContext('2d');
+				canvas.addEventListener('mousemove', handleMouseMove, false);
+				canvas.addEventListener('mousedown', handleMouseDown, false);
+				canvas.addEventListener('mouseup', handleMouseUp, false);
+
+				var gameLoop = function() {
+					update();
+					draw(context);
+				}
+
+				var animFrameLoop = function() {
+					gameLoop();
+					requestAnimFrame(animFrameLoop)
+				}
+				requestAnimFrame(animFrameLoop);
+			}
+		</script>
+	</head>
+	<body onload="startGame();" bgcolor="#0076a3">
+		<div style="font-family:Helvetica; align:center;">
+			<div id="highScore" style="left:15px; color:white; font-size:55px; font-family:Impact;">0.0</div>
+			<!--<div id="highScoreLabel" style="width:90px; position:absolute; color:#ec4343; float:left; font-size:14; font-weight:condensed; top:65px; background-color:#ffffff; text-align:center;">High Today</div>-->
+			<canvas id="gameBoard" width="500" height="500" style="border-style:solid; border-width:2px; border-color:white;"></canvas>
+		</div>
+	</body>
+</html>
