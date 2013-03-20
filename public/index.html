@@ -13,6 +13,13 @@
 			              };
 			})();
 
+			// Array Remove - By John Resig (MIT Licensed)
+			Array.prototype.remove = function(from, to) {
+				var rest = this.slice((to || from) + 1 || this.length);
+				this.length = from < 0 ? this.length + from : from;
+				return this.push.apply(this, rest);
+			};
+
 			var GameState = {
 				ORBIT_PLACING : 1,
 				ORBIT_WINDUP : 2,
@@ -25,6 +32,7 @@
 			var mousePos = [ -20, -20 ];
 			var mouseDownPos = [ 0, 0 ];
 			var maxLength = 80;
+			var maxDistance = 2500;
 			var iterations = 0;
 
 			var startTime;
@@ -33,8 +41,11 @@
 			var thrownObject = {
 				radius : 7,
 				pos : [ 0, 0 ],
-				vel : [ 0, 0 ]
+				vel : [ 0, 0 ],
+				active : true
 			};
+
+			var thrownObjects = [];
 
 			var planet = {
 				radius : 50,
@@ -73,37 +84,34 @@
 			}
 
 			function update() {
-				if (!thrownObject) {
-					return;
-				}
-
-				var score = document.getElementById('highScore');
-				if (iterations > 5) {
-					if (gameState == GameState.ORBIT_ACTIVE) {
-						var endTime = new Date().getTime();
-						score.innerHTML = ((endTime - startTime) / 1000).toFixed(1);
-					}
-					else {
-						score.innerHTML = "0.0";
-					}
-					iterations = 0;
-				}
-				iterations++;
-
 				if (gameState == GameState.ORBIT_PLACING) {
 					thrownObject.pos = mousePos;
 				}
 				else if (gameState == GameState.ORBIT_WINDUP) {
 					thrownObject.pos = mouseDownPos;
 				}
-				else if (gameState == GameState.ORBIT_ACTIVE) {
-					var curPos = thrownObject.pos;
-					var curVel = thrownObject.vel;
+
+				var activeObjects = 0;
+
+				for (var i = 0; i < thrownObjects.length; ++i) {
+					var obj = thrownObjects[i];
+					if (obj.active == false) {
+						continue;
+					}
+
+					activeObjects++;
+
+					var curPos = obj.pos;
+					var curVel = obj.vel;
 					var planetPos = planet.pos;
 
 					var dist = distance(curPos, planetPos);
 					var dir = direction(curPos, planetPos);
-					var force = 1500.0 / ((dist * dist) + 100.0);
+					var force = 3000.0 / ((dist * dist) + 500.0);
+
+					if (dist > maxDistance) {
+						obj.active = false;
+					}
 
 					curVel[0] += dir[0] * force;
 					curVel[1] += dir[1] * force;
@@ -112,10 +120,18 @@
 					curPos[1] += curVel[1];
 
 					var collideDist = distance(curPos, planetPos);
-					if (collideDist < thrownObject.radius + planet.radius) {
-						gameState = GameState.ORBIT_FINISHED;
+					if (collideDist < obj.radius + planet.radius) {
+						obj.active = false;
+						// TODO: Some sweet effect here.
 					}
 				}
+
+				var score = document.getElementById('highScore');
+				if (iterations > 5) {
+					score.innerHTML = activeObjects.toFixed(0);
+					iterations = 0;
+				}
+				iterations++;
 			}
 
 			function draw(context) {
@@ -140,14 +156,18 @@
 				context.fillStyle = "#ec4343";
 				context.strokeStyle = "#00bff3";
 
+				context.lineWidth = 2;
 				if (thrownObject) {
-					context.lineWidth = 2;
 					drawOrbitPosition(context, thrownObject.pos, thrownObject.radius);
 				}
 
-				//planet.pos = [50, 50];
-				//context.lineWidth = 3;
-				//drawOrbitPosition(context, planet.pos, planet.radius);
+				for (var i = 0; i < thrownObjects.length; ++i) {
+					var obj = thrownObjects[i];
+					if (obj.active) {
+						drawOrbitPosition(context, obj.pos, obj.radius);
+					}
+				}
+
 				if (planet.img) {
 					context.drawImage(planet.img, planet.pos[0] - planet.img.width / 2, planet.pos[1] - planet.img.height / 2);
 				}
@@ -176,12 +196,20 @@
 			function handleMouseUp() {
 				var lengthScale = 0.05;
 				if (gameState == GameState.ORBIT_WINDUP) {
-					gameState = GameState.ORBIT_ACTIVE;
+					gameState = GameState.ORBIT_PLACING;
 
 					var dir = direction(mousePos, mouseDownPos);
 					var len = Math.min(distance(mousePos, mouseDownPos) * lengthScale, maxLength);
 					thrownObject.vel = [ dir[0] * len, dir[1] * len ];
 					mouseDownPos = [ 0, 0 ];
+
+					thrownObjects.push(thrownObject);
+					thrownObject = {
+						radius : 7,
+						pos : [ 0, 0 ],
+						vel : [ 0, 0 ],
+						active : true
+					};
 
 					startTime = new Date().getTime();
 				}
