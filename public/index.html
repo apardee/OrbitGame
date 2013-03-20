@@ -28,24 +28,18 @@
 			};
 
 			// Game variables.
-			var gameState = GameState.ORBIT_PLACING;
-			var mousePos = [ -20, -20 ];
-			var mouseDownPos = [ 0, 0 ];
-			var maxLength = 80;
-			var maxDistance = 2000;
-			var iterations = 0;
 
-			var startTime;
+			var gameState;
+			var planetsLeft;
+			var mousePos;
+			var mouseDownPos;
+			var maxLength;
+			var maxDistance;
+			var iterations;
 
 			// Initialize the game objects.
-			var thrownObject = {
-				radius : 7,
-				pos : [ 0, 0 ],
-				vel : [ 0, 0 ],
-				active : true
-			};
-
-			var thrownObjects = [];
+			var thrownObject;
+			var thrownObjects;
 
 			var planet = {
 				radius : 50,
@@ -91,6 +85,11 @@
 					thrownObject.pos = mouseDownPos;
 				}
 
+				if (planetsLeft <= 0) {
+					// TODO: Some other mode here of showing the score. This is a big state change.
+					startGame();
+				}
+
 				var activeObjects = 0;
 
 				for (var i = 0; i < thrownObjects.length; ++i) {
@@ -122,6 +121,7 @@
 					var collideDist = distance(curPos, planetPos);
 					if (collideDist < obj.radius + planet.radius) {
 						obj.active = false;
+						planetsLeft -= 1;
 						// TODO: Some sweet effect here.
 					}
 
@@ -133,18 +133,40 @@
 								if (collideDist < obj.radius + obj2.radius) {
 									obj.active = false;
 									obj2.active = false;
+									planetsLeft -= 2;
 								}
 							}
 						}
 					}
 				}
 
-				var score = document.getElementById('highScore');
 				if (iterations > 5) {
+					var scoreContainer = document.getElementById('scoreContainer');
+					if (activeObjects > 0 && parseFloat(scoreContainer.style.opacity) == 0) {
+						fadeIn(scoreContainer);
+					}
+
+					var score = document.getElementById('highScore');
 					score.innerHTML = activeObjects.toFixed(0);
+
+					var planets = document.getElementById('planetsLeft');
+					planets.innerHTML = planetsLeft.toFixed(0);
+
 					iterations = 0;
 				}
 				iterations++;
+			}
+
+			function fadeIn(element) {
+				var interval = window.setInterval(function() {
+ 					var opacity = parseFloat(element.style.opacity);
+ 					var newOpacity = (opacity + 0.025).toFixed(2);
+ 					element.style.opacity = newOpacity;
+
+ 					if (newOpacity >= 1.0) {
+ 						window.clearInterval(interval);
+ 					}
+ 				}, 33);
 			}
 
 			function draw(context) {
@@ -223,8 +245,6 @@
 						vel : [ 0, 0 ],
 						active : true
 					};
-
-					startTime = new Date().getTime();
 				}
 			}
 
@@ -238,6 +258,24 @@
 				var canvas = document.getElementById('gameBoard');
 				canvas.width = window.innerWidth - 13;
  				canvas.height = window.innerHeight - 13;
+ 				fadeIn(canvas);
+
+ 				gameState = GameState.ORBIT_PLACING;
+				planetsLeft = 5;
+				mousePos = [ -20, -20 ];
+				mouseDownPos = [ 0, 0 ];
+				maxLength = 80;
+				maxDistance = 2000;
+				iterations = 0;
+
+				// Initialize the game objects.
+				thrownObject = {
+					radius : 7,
+					pos : [ 0, 0 ],
+					vel : [ 0, 0 ],
+					active : true
+				};
+				thrownObjects =[];
 
  				planet.pos = [ canvas.width / 2 - planet.radius / 2, canvas.height / 2 - planet.radius / 2 ];
 
@@ -270,9 +308,12 @@
 	</head>
 	<body onload="startGame();" bgcolor="#1b168d" style="margin-left:0px; margin-top:0px;">
 		<div style="font-family:Helvetica; align:center;">
-			<div id="highScore" style="position:absolute; left:15px; color:white; font-size:55px; font-family:Impact;"></div>
-			<!--<div id="highScoreLabel" style="width:90px; position:absolute; color:#ec4343; float:left; font-size:14; font-weight:condensed; top:65px; background-color:#ffffff; text-align:center;">High Today</div>-->
-			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white;"></canvas>
+			<div id="scoreContainer" style="position:absolute; top:15px; left:15px; opacity:0; text-align:right;">
+				<div id="highScore" style="color:white; font-size:55px; font-family:Impact;"></div>
+				<!--<div id="highScoreLabel" style="font-size:14; font-weight:condensed; top:65px; background-color:#ffffff; text-align:center;">Orbiting</div>-->
+				<div id="planetsLeft" style="color:white; font-size:55px; font-family:Impact;"></div>
+			</div>
+			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white; opacity:0;"></canvas>
 		</div>
 	</body>
 </html>
