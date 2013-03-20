@@ -22,7 +22,6 @@
 
 			// Game variables.
 			var gameState = GameState.ORBIT_PLACING;
-			var boardDimensions = 500;
 			var mousePos = [ -20, -20 ];
 			var mouseDownPos = [ 0, 0 ];
 			var maxLength = 80;
@@ -33,7 +32,7 @@
 			// Initialize the game objects.
 			var thrownObject = {
 				radius : 7,
-				pos : [ boardDimensions / 2, 20 ],
+				pos : [ 0, 0 ],
 				vel : [ 0, 0 ]
 			};
 
@@ -41,9 +40,6 @@
 				radius : 35,
 				pos : [ 0, 0 ]
 			};
-
-			var planetCenter = boardDimensions / 2 - planet.radius / 2;
-			planet.pos = [ planetCenter, planetCenter ];
 
 			function drawOrbitPosition(context, pos, radius) {
 				context.fillStyle = "#ec4343";
@@ -122,7 +118,10 @@
 			}
 
 			function draw(context) {
-				context.clearRect(0, 0, boardDimensions, boardDimensions);
+				var canvas = document.getElementById('gameBoard');
+				var width = window.innerWidth;
+ 				var height = window.innerHeight;
+				context.clearRect(0, 0, width, height);
 
 				if (gameState == GameState.ORBIT_WINDUP) {
 					context.strokeStyle = "#ffffff";
@@ -171,7 +170,6 @@
 
 			function handleMouseUp() {
 				var lengthScale = 0.05;
-
 				if (gameState == GameState.ORBIT_WINDUP) {
 					gameState = GameState.ORBIT_ACTIVE;
 
@@ -184,12 +182,25 @@
 				}
 			}
 
+			function handleWindowResize() {
+				var canvas = document.getElementById('gameBoard');
+				canvas.width = window.innerWidth - 13;
+ 				canvas.height = window.innerHeight - 13;
+			}
+
 			function startGame() {
 				var canvas = document.getElementById('gameBoard');
+				canvas.width = window.innerWidth - 13;
+ 				canvas.height = window.innerHeight - 13;
+
+ 				planet.pos = [ canvas.width / 2 - planet.radius / 2, canvas.height / 2 - planet.radius / 2 ] ;
+
 				var context = canvas.getContext('2d');
+				
 				canvas.addEventListener('mousemove', handleMouseMove, false);
 				canvas.addEventListener('mousedown', handleMouseDown, false);
 				canvas.addEventListener('mouseup', handleMouseUp, false);
+				window.onresize = handleWindowResize;
 
 				var gameLoop = function() {
 					update();
@@ -204,11 +215,11 @@
 			}
 		</script>
 	</head>
-	<body onload="startGame();" bgcolor="#0076a3">
+	<body onload="startGame();" bgcolor="#0076a3" style="margin-left:0px; margin-top:0px;">
 		<div style="font-family:Helvetica; align:center;">
-			<div id="highScore" style="left:15px; color:white; font-size:55px; font-family:Impact;">0.0</div>
+			<div id="highScore" style="position:absolute; left:15px; color:white; font-size:55px; font-family:Impact;"></div>
 			<!--<div id="highScoreLabel" style="width:90px; position:absolute; color:#ec4343; float:left; font-size:14; font-weight:condensed; top:65px; background-color:#ffffff; text-align:center;">High Today</div>-->
-			<canvas id="gameBoard" width="500" height="500" style="border-style:solid; border-width:2px; border-color:white;"></canvas>
+			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white;"></canvas>
 		</div>
 	</body>
 </html>
