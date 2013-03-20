@@ -87,7 +87,7 @@
 
 				if (planetsLeft <= 0) {
 					// TODO: Some other mode here of showing the score. This is a big state change.
-					startGame();
+					initializeGameVars();
 				}
 
 				var activeObjects = 0;
@@ -254,13 +254,8 @@
  				canvas.height = window.innerHeight - 13;
 			}
 
-			function startGame() {
-				var canvas = document.getElementById('gameBoard');
-				canvas.width = window.innerWidth - 13;
- 				canvas.height = window.innerHeight - 13;
- 				fadeIn(canvas);
-
- 				gameState = GameState.ORBIT_PLACING;
+			function initializeGameVars() {
+				gameState = GameState.ORBIT_PLACING;
 				planetsLeft = 5;
 				mousePos = [ -20, -20 ];
 				mouseDownPos = [ 0, 0 ];
@@ -276,6 +271,15 @@
 					active : true
 				};
 				thrownObjects =[];
+			}
+
+			function startGame() {
+				var canvas = document.getElementById('gameBoard');
+				canvas.width = window.innerWidth - 13;
+ 				canvas.height = window.innerHeight - 13;
+ 				fadeIn(canvas);
+
+ 				initializeGameVars();
 
  				planet.pos = [ canvas.width / 2 - planet.radius / 2, canvas.height / 2 - planet.radius / 2 ];
 
