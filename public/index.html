@@ -32,7 +32,7 @@
 			var mousePos = [ -20, -20 ];
 			var mouseDownPos = [ 0, 0 ];
 			var maxLength = 80;
-			var maxDistance = 2500;
+			var maxDistance = 2000;
 			var iterations = 0;
 
 			var startTime;
@@ -123,6 +123,19 @@
 					if (collideDist < obj.radius + planet.radius) {
 						obj.active = false;
 						// TODO: Some sweet effect here.
+					}
+
+					if (obj.active) {
+						for (var j = 0; j < thrownObjects.length; ++j) {
+							var obj2 = thrownObjects[j];
+							if (obj2.active && obj != obj2) {
+								var collideDist = distance(obj.pos, obj2.pos);
+								if (collideDist < obj.radius + obj2.radius) {
+									obj.active = false;
+									obj2.active = false;
+								}
+							}
+						}
 					}
 				}
 
