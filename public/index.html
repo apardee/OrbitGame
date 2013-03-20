@@ -37,8 +37,9 @@
 			};
 
 			var planet = {
-				radius : 35,
-				pos : [ 0, 0 ]
+				radius : 50,
+				pos : [ 0, 0 ],
+				img : null
 			};
 
 			function drawOrbitPosition(context, pos, radius) {
@@ -144,8 +145,12 @@
 					drawOrbitPosition(context, thrownObject.pos, thrownObject.radius);
 				}
 
-				context.lineWidth = 3;
-				drawOrbitPosition(context, planet.pos, planet.radius);
+				//planet.pos = [50, 50];
+				//context.lineWidth = 3;
+				//drawOrbitPosition(context, planet.pos, planet.radius);
+				if (planet.img) {
+					context.drawImage(planet.img, planet.pos[0] - planet.img.width / 2, planet.pos[1] - planet.img.height / 2);
+				}
 			}
 
 			function handleMouseMove(mouseMoveEvent) {
@@ -193,7 +198,14 @@
 				canvas.width = window.innerWidth - 13;
  				canvas.height = window.innerHeight - 13;
 
- 				planet.pos = [ canvas.width / 2 - planet.radius / 2, canvas.height / 2 - planet.radius / 2 ] ;
+ 				planet.pos = [ canvas.width / 2 - planet.radius / 2, canvas.height / 2 - planet.radius / 2 ];
+
+ 				// Load the planet image.
+ 				var planetImage = new Image();
+ 				planetImage.src = "sun.png";
+ 				planetImage.onload = function() {
+ 					planet.img = planetImage;
+ 				}
 
 				var context = canvas.getContext('2d');
 				
@@ -215,7 +227,7 @@
 			}
 		</script>
 	</head>
-	<body onload="startGame();" bgcolor="#0076a3" style="margin-left:0px; margin-top:0px;">
+	<body onload="startGame();" bgcolor="#1b168d" style="margin-left:0px; margin-top:0px;">
 		<div style="font-family:Helvetica; align:center;">
 			<div id="highScore" style="position:absolute; left:15px; color:white; font-size:55px; font-family:Impact;"></div>
 			<!--<div id="highScoreLabel" style="width:90px; position:absolute; color:#ec4343; float:left; font-size:14; font-weight:condensed; top:65px; background-color:#ffffff; text-align:center;">High Today</div>-->
