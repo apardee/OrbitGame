@@ -28,7 +28,6 @@
 			};
 
 			// Game variables.
-
 			var gameState;
 			var planetsLeft;
 			var mousePos;
@@ -117,6 +116,18 @@
 
 					curPos[0] += curVel[0];
 					curPos[1] += curVel[1];
+
+					// Cheat here a little bit to make the mechanics more interesting.
+					// Basically, don't allow the distance from the planet to exceed the prior distance.
+					// This forces the orbit into a spiral, but avoids the ease of putting the object into
+					// an elliptical orbit, rewarding more circular orbits.
+					// TODO: Kill the component velocity away from the planet.
+					var newDist = distance(curPos, planetPos);
+					if (newDist > dist) {
+						var nDir = direction(planetPos, curPos);
+						curPos[0] = planetPos[0] + nDir[0] * dist; 
+						curPos[1] = planetPos[1] + nDir[1] * dist;
+					}
 
 					var collideDist = distance(curPos, planetPos);
 					if (collideDist < obj.radius + planet.radius) {
@@ -310,7 +321,7 @@
 			}
 		</script>
 	</head>
-	<body onload="startGame();" bgcolor="#1b168d" style="margin-left:0px; margin-top:0px;">
+	<body onload="startGame();" bgcolor="black" style="margin-left:0px; margin-top:0px;">
 		<div style="font-family:Helvetica; align:center;">
 			<div id="scoreContainer" style="position:absolute; top:15px; left:15px; opacity:0; text-align:right;">
 				<div id="highScore" style="color:white; font-size:55px; font-family:Impact;"></div>
