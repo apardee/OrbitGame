@@ -82,7 +82,7 @@
 				else if (gameState == GameState.ORBIT_WINDUP) {
 					thrownObject.pos = mouseDownPos;
 				}
-				
+
 				var activeObjects = 0;
 
 				for (var i = 0; i < thrownObjects.length; ++i) {
@@ -112,22 +112,22 @@
 					curPos[1] += curVel[1];
 
 					// Cheat here a little bit to make the mechanics more interesting.
-					// Basically, don't allow the distance from the planet to exceed the prior distance.
+					// Basically, dampen the velocity away from the planet.
 					// This forces the orbit into a spiral, but avoids the ease of putting the object into
 					// an elliptical orbit, rewarding more circular orbits.
 					// TODO: Kill the component velocity away from the planet.
-					var newDist = distance(curPos, planetPos);
-					if (newDist > dist) {
-						var nDir = direction(planetPos, curPos);
-						curPos[0] = planetPos[0] + nDir[0] * dist; 
-						curPos[1] = planetPos[1] + nDir[1] * dist;
-					}
+					var velDir = normalize(curVel);
+					var otherDir = direction(planetPos, curPos);
+					var dampenFactor = Math.max(velDir[0] * otherDir[0] + velDir[1] * otherDir[1], 0) * 0.05;
+					curVel[0] = curVel[0] - curVel[0] * dampenFactor;
+					curVel[1] = curVel[1] - curVel[1] * dampenFactor;
 
 					var collideDist = distance(curPos, planetPos);
 					if (collideDist < obj.radius + planet.radius) {
 						obj.active = false;
 						// TODO: Some sweet effect here.
 					}
+				}
 			}
 
 			function fadeIn(element, completeBlock) {
