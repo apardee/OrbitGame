@@ -29,7 +29,6 @@
 
 			// Game variables.
 			var gameState;
-			var planetsLeft;
 			var mousePos;
 			var mouseDownPos;
 			var maxLength;
@@ -47,8 +46,8 @@
 			};
 
 			function drawOrbitPosition(context, pos, radius) {
-				context.fillStyle = "#ec4343";
-				context.strokeStyle = "#00bff3";
+				context.fillStyle = "#dddddd";
+				context.strokeStyle = "#ffffff";
 
 				context.beginPath();
 				context.arc(pos[0], pos[1], radius, 0, 2 * Math.PI, false);
@@ -84,10 +83,10 @@
 					thrownObject.pos = mouseDownPos;
 				}
 
-				if (planetsLeft <= 0) {
+				/*if (planetsLeft <= 0) {
 					// TODO: Some other mode here of showing the score. This is a big state change.
 					initializeGameVars();
-				}
+				}*/
 
 				var activeObjects = 0;
 
@@ -132,10 +131,10 @@
 					var collideDist = distance(curPos, planetPos);
 					if (collideDist < obj.radius + planet.radius) {
 						obj.active = false;
-						planetsLeft -= 1;
 						// TODO: Some sweet effect here.
 					}
 
+					/*
 					if (obj.active) {
 						for (var j = 0; j < thrownObjects.length; ++j) {
 							var obj2 = thrownObjects[j];
@@ -149,6 +148,7 @@
 							}
 						}
 					}
+					*/
 				}
 
 				if (iterations > 5) {
@@ -160,22 +160,41 @@
 					var score = document.getElementById('highScore');
 					score.innerHTML = activeObjects.toFixed(0);
 
-					var planets = document.getElementById('planetsLeft');
-					planets.innerHTML = planetsLeft.toFixed(0);
+					//var planets = document.getElementById('planetsLeft');
+					//planets.innerHTML = planetsLeft.toFixed(0);
 
 					iterations = 0;
 				}
 				iterations++;
 			}
 
-			function fadeIn(element) {
+			function fadeIn(element, completeBlock) {
 				var interval = window.setInterval(function() {
  					var opacity = parseFloat(element.style.opacity);
- 					var newOpacity = (opacity + 0.025).toFixed(2);
+ 					var newOpacity = (opacity + 0.05).toFixed(2);
  					element.style.opacity = newOpacity;
 
  					if (newOpacity >= 1.0) {
  						window.clearInterval(interval);
+
+ 						if (completeBlock) {
+ 							completeBlock();
+ 						}
+ 					}
+ 				}, 33);
+			}
+
+			function fadeOut(element, completeBlock) {
+				var interval = window.setInterval(function() {
+ 					var opacity = parseFloat(element.style.opacity);
+ 					var newOpacity = (opacity - 0.05).toFixed(2);
+ 					element.style.opacity = newOpacity;
+
+ 					if (newOpacity <= 0.0) {
+ 						window.clearInterval(interval);
+ 						if (completeBlock) {
+ 							completeBlock();
+ 						}
  					}
  				}, 33);
 			}
@@ -261,13 +280,12 @@
 
 			function handleWindowResize() {
 				var canvas = document.getElementById('gameBoard');
-				canvas.width = window.innerWidth - 13;
- 				canvas.height = window.innerHeight - 13;
+				canvas.width = window.innerWidth - 12;
+ 				canvas.height = window.innerHeight - 12;
 			}
 
 			function initializeGameVars() {
 				gameState = GameState.ORBIT_PLACING;
-				planetsLeft = 5;
 				mousePos = [ -20, -20 ];
 				mouseDownPos = [ 0, 0 ];
 				maxLength = 80;
@@ -286,13 +304,24 @@
 
 			function startGame() {
 				var canvas = document.getElementById('gameBoard');
-				canvas.width = window.innerWidth - 13;
- 				canvas.height = window.innerHeight - 13;
+				canvas.width = window.innerWidth - 12;
+ 				canvas.height = window.innerHeight - 12;
  				fadeIn(canvas);
 
- 				initializeGameVars();
+ 				var ins1 = document.getElementById('instructionsLabel1');
+ 				var ins2 = document.getElementById('instructionsLabel2');
+ 				var titleLabel = document.getElementById('titleLabel');
 
- 				planet.pos = [ canvas.width / 2 - planet.radius / 2, canvas.height / 2 - planet.radius / 2 ];
+ 				var instructionsStart = 1200;
+ 				window.setTimeout(function() { fadeIn(titleLabel); }, 400);
+ 				window.setTimeout(function() { fadeIn(ins1); }, instructionsStart);
+ 				window.setTimeout(function() { fadeIn(ins2); }, instructionsStart + 1000);
+ 				window.setTimeout(function() { fadeOut(ins1); }, instructionsStart + 1200);
+ 				window.setTimeout(function() { fadeOut(ins2); }, instructionsStart + 2000);
+ 				window.setTimeout(function() { fadeOut(titleLabel); }, instructionsStart + 2500);
+
+ 				initializeGameVars();
+ 				planet.pos = [ canvas.width / 2, canvas.height / 2 ];
 
  				// Load the planet image.
  				var planetImage = new Image();
@@ -303,9 +332,9 @@
 
 				var context = canvas.getContext('2d');
 				
+				canvas.addEventListener('mouseup', handleMouseUp, false);
 				canvas.addEventListener('mousemove', handleMouseMove, false);
 				canvas.addEventListener('mousedown', handleMouseDown, false);
-				canvas.addEventListener('mouseup', handleMouseUp, false);
 				window.onresize = handleWindowResize;
 
 				var gameLoop = function() {
@@ -321,12 +350,15 @@
 			}
 		</script>
 	</head>
-	<body onload="startGame();" bgcolor="black" style="margin-left:0px; margin-top:0px;">
+	<body onload="startGame();" bgcolor="#222222" style="margin-left:0px; margin-top:0px;">
 		<div style="font-family:Helvetica; align:center;">
-			<div id="scoreContainer" style="position:absolute; top:15px; left:15px; opacity:0; text-align:right;">
-				<div id="highScore" style="color:white; font-size:55px; font-family:Impact;"></div>
-				<!--<div id="highScoreLabel" style="font-size:14; font-weight:condensed; top:65px; background-color:#ffffff; text-align:center;">Orbiting</div>-->
-				<div id="planetsLeft" style="color:white; font-size:55px; font-family:Impact;"></div>
+			<div id="titleLabel" style="position:absolute; top:0px; left:0px; color:#dddddd; font-size:80px; font-family:Impact; width:100%; text-align:center; opacity:0;">orbit</div>
+			<div id="instructionsLabel1" style="font-family:HelveticaNeue-Light; position:absolute; top:100px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">put your planet in orbit</div>
+			<div id="instructionsLabel2" style="font-family:HelveticaNeue-Light; position:absolute; top:120px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">keep it there as long as you can</div>
+			<div id="scoreContainer" style="position:absolute; top:0px; left:0px; opacity:0; text-align:right; width:100%;">
+				<div id="highScore" style="color:#dddddd; font-size:105px; font-family:Impact; width:70px;"></div>
+				<!--<div id="highScoreLabel" style="font-size:12; font-weight:condensed; top:50px; color:#dddddd; background-color:#222222; text-align:center; width:70px; height:25px;">Revolutions</div>-->
+				<!--<div id="planetsLeft" style="color:white; font-size:105px; font-family:Impact;"></div>-->
 			</div>
 			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white; opacity:0;"></canvas>
 		</div>
