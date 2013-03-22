@@ -82,12 +82,7 @@
 				else if (gameState == GameState.ORBIT_WINDUP) {
 					thrownObject.pos = mouseDownPos;
 				}
-
-				/*if (planetsLeft <= 0) {
-					// TODO: Some other mode here of showing the score. This is a big state change.
-					initializeGameVars();
-				}*/
-
+				
 				var activeObjects = 0;
 
 				for (var i = 0; i < thrownObjects.length; ++i) {
@@ -133,39 +128,6 @@
 						obj.active = false;
 						// TODO: Some sweet effect here.
 					}
-
-					/*
-					if (obj.active) {
-						for (var j = 0; j < thrownObjects.length; ++j) {
-							var obj2 = thrownObjects[j];
-							if (obj2.active && obj != obj2) {
-								var collideDist = distance(obj.pos, obj2.pos);
-								if (collideDist < obj.radius + obj2.radius) {
-									obj.active = false;
-									obj2.active = false;
-									planetsLeft -= 2;
-								}
-							}
-						}
-					}
-					*/
-				}
-
-				if (iterations > 5) {
-					var scoreContainer = document.getElementById('scoreContainer');
-					if (activeObjects > 0 && parseFloat(scoreContainer.style.opacity) == 0) {
-						fadeIn(scoreContainer);
-					}
-
-					var score = document.getElementById('highScore');
-					score.innerHTML = activeObjects.toFixed(0);
-
-					//var planets = document.getElementById('planetsLeft');
-					//planets.innerHTML = planetsLeft.toFixed(0);
-
-					iterations = 0;
-				}
-				iterations++;
 			}
 
 			function fadeIn(element, completeBlock) {
@@ -234,7 +196,13 @@
 				}
 
 				if (planet.img) {
-					context.drawImage(planet.img, planet.pos[0] - planet.img.width / 2, planet.pos[1] - planet.img.height / 2);
+					var planetX = planet.pos[0] - planet.img.width / 2;
+					var planetY = planet.pos[1] - planet.img.height / 2;
+					context.drawImage(planet.img, planetX, planetY);
+
+					context.fillStyle = "#222222";
+					context.font = "45px Impact";
+  					context.fillText("", planet.pos[0] - 12, planet.pos[1] + 16);
 				}
 			}
 
@@ -355,11 +323,11 @@
 			<div id="titleLabel" style="position:absolute; top:0px; left:0px; color:#dddddd; font-size:80px; font-family:Impact; width:100%; text-align:center; opacity:0;">orbit</div>
 			<div id="instructionsLabel1" style="font-family:HelveticaNeue-Light; position:absolute; top:100px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">put your planet in orbit</div>
 			<div id="instructionsLabel2" style="font-family:HelveticaNeue-Light; position:absolute; top:120px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">keep it there as long as you can</div>
-			<div id="scoreContainer" style="position:absolute; top:0px; left:0px; opacity:0; text-align:right; width:100%;">
+			<!--<div id="scoreContainer" style="position:absolute; top:0px; left:0px; opacity:0; text-align:right; width:100%;">
 				<div id="highScore" style="color:#dddddd; font-size:105px; font-family:Impact; width:70px;"></div>
-				<!--<div id="highScoreLabel" style="font-size:12; font-weight:condensed; top:50px; color:#dddddd; background-color:#222222; text-align:center; width:70px; height:25px;">Revolutions</div>-->
-				<!--<div id="planetsLeft" style="color:white; font-size:105px; font-family:Impact;"></div>-->
-			</div>
+				<div id="highScoreLabel" style="font-size:12; font-weight:condensed; top:50px; color:#dddddd; background-color:#222222; text-align:center; width:70px; height:25px;">Revolutions</div>
+				<div id="planetsLeft" style="color:white; font-size:105px; font-family:Impact;"></div>
+			</div>-->
 			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white; opacity:0;"></canvas>
 		</div>
 	</body>
