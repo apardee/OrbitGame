@@ -35,6 +35,8 @@
 			var maxDistance;
 			var iterations;
 			var releasePos;
+			var fontSizeScale = 1.0;
+			var lastRevolutions = -1;
 
 			// Initialize the game objects.
 			var thrownObject;
@@ -138,6 +140,39 @@
 				}
 			}
 
+			function scaleNumberLabel(scaleVal, completeBlock, rate) {
+				rate = rate || 0.08;
+
+				var interval = window.setInterval(function() {
+					var complete = false;
+					if (fontSizeScale < scaleVal) {
+						fontSizeScale += rate;
+						if (fontSizeScale >= scaleVal) {
+							complete = true;
+						}
+					}
+					else {
+						fontSizeScale -= rate;
+						if (fontSizeScale <= scaleVal) {
+							complete = true;
+						}
+					}
+
+					if (complete) {
+						if (completeBlock) {
+							completeBlock();
+						}
+						window.clearInterval(interval);
+					}
+				}, 33);
+			}
+
+			function pulseFontScale() {
+				scaleNumberLabel(1.5, function() {
+  					scaleNumberLabel(1.0);
+  				}, 0.15);
+			}
+
 			function fadeIn(element, completeBlock) {
 				var interval = window.setInterval(function() {
  					var opacity = parseFloat(element.style.opacity);
@@ -206,14 +241,20 @@
 					var planetY = planet.pos[1] - planet.img.height / 2;
 					context.drawImage(planet.img, planetX, planetY);
 
-					context.fillStyle = "#222222";
-					context.font = "45px Impact";
-
 					if (thrownObjects.length) {
 						var revolutions =  thrownObjects[0].degreesAccum / (2 * Math.PI);
+						revolutions = Math.floor(revolutions);
+						if (lastRevolutions != revolutions) {
+							pulseFontScale();
+							lastRevolutions = revolutions;
+						}
+
+						context.fillStyle = "#222222";
+						context.font = (45 * fontSizeScale) + "px Impact";
+
 						context.textAlign = 'center';
 						context.textBaseline = 'middle';
-  						context.fillText(Math.floor(revolutions).toFixed(0), planet.pos[0], planet.pos[1]);
+  						context.fillText(revolutions.toFixed(0), planet.pos[0], planet.pos[1]);
 					}
 				}
 			}
