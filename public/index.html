@@ -34,6 +34,7 @@
 			var maxLength;
 			var maxDistance;
 			var iterations;
+			var releasePos;
 
 			// Initialize the game objects.
 			var thrownObject;
@@ -83,26 +84,21 @@
 					thrownObject.pos = mouseDownPos;
 				}
 
-				var activeObjects = 0;
-
 				for (var i = 0; i < thrownObjects.length; ++i) {
 					var obj = thrownObjects[i];
-					if (obj.active == false) {
-						continue;
-					}
-
-					activeObjects++;
 
 					var curPos = obj.pos;
 					var curVel = obj.vel;
 					var planetPos = planet.pos;
+
+					var prevDir = direction(planetPos, curPos);
 
 					var dist = distance(curPos, planetPos);
 					var dir = direction(curPos, planetPos);
 					var force = 3000.0 / ((dist * dist) + 500.0);
 
 					if (dist > maxDistance) {
-						obj.active = false;
+						thrownObjects = [];
 					}
 
 					curVel[0] += dir[0] * force;
@@ -115,17 +111,29 @@
 					// Basically, dampen the velocity away from the planet.
 					// This forces the orbit into a spiral, but avoids the ease of putting the object into
 					// an elliptical orbit, rewarding more circular orbits.
-					// TODO: Kill the component velocity away from the planet.
 					var velDir = normalize(curVel);
 					var otherDir = direction(planetPos, curPos);
 					var dampenFactor = Math.max(velDir[0] * otherDir[0] + velDir[1] * otherDir[1], 0) * 0.05;
 					curVel[0] = curVel[0] - curVel[0] * dampenFactor;
 					curVel[1] = curVel[1] - curVel[1] * dampenFactor;
 
+					// Add the accumulated travelled distance.
+					var angle = Math.acos(otherDir[0] * prevDir[0] + otherDir[1] * prevDir[1]);
+					obj.degreesAccum = obj.degreesAccum + angle;
+
 					var collideDist = distance(curPos, planetPos);
 					if (collideDist < obj.radius + planet.radius) {
-						obj.active = false;
+						thrownObjects = [];
+
+						gameState = GameState.ORBIT_PLACING;
+
 						// TODO: Some sweet effect here.
+						thrownObject = {
+							radius : 7,
+							pos : [ 0, 0 ],
+							vel : [ 0, 0 ],
+							degreesAccum : 0
+						};
 					}
 				}
 			}
@@ -190,9 +198,7 @@
 
 				for (var i = 0; i < thrownObjects.length; ++i) {
 					var obj = thrownObjects[i];
-					if (obj.active) {
-						drawOrbitPosition(context, obj.pos, obj.radius);
-					}
+					drawOrbitPosition(context, obj.pos, obj.radius);
 				}
 
 				if (planet.img) {
@@ -202,7 +208,13 @@
 
 					context.fillStyle = "#222222";
 					context.font = "45px Impact";
-  					context.fillText("", planet.pos[0] - 12, planet.pos[1] + 16);
+
+					if (thrownObjects.length) {
+						var revolutions =  thrownObjects[0].degreesAccum / (2 * Math.PI);
+						context.textAlign = 'center';
+						context.textBaseline = 'middle';
+  						context.fillText(Math.floor(revolutions).toFixed(0), planet.pos[0], planet.pos[1]);
+					}
 				}
 			}
 
@@ -229,20 +241,17 @@
 			function handleMouseUp() {
 				var lengthScale = 0.05;
 				if (gameState == GameState.ORBIT_WINDUP) {
-					gameState = GameState.ORBIT_PLACING;
+					gameState = GameState.ORBIT_ACTIVE;
 
 					var dir = direction(mousePos, mouseDownPos);
 					var len = Math.min(distance(mousePos, mouseDownPos) * lengthScale, maxLength);
+
+					releasePos = thrownObject.pos;
+
 					thrownObject.vel = [ dir[0] * len, dir[1] * len ];
 					mouseDownPos = [ 0, 0 ];
 
-					thrownObjects.push(thrownObject);
-					thrownObject = {
-						radius : 7,
-						pos : [ 0, 0 ],
-						vel : [ 0, 0 ],
-						active : true
-					};
+					thrownObjects = [ thrownObject ];
 				}
 			}
 
@@ -265,7 +274,7 @@
 					radius : 7,
 					pos : [ 0, 0 ],
 					vel : [ 0, 0 ],
-					active : true
+					degreesAccum : 0
 				};
 				thrownObjects =[];
 			}
