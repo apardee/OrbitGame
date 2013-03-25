@@ -21,6 +21,7 @@
 			};
 
 			var GameState = {
+				ORBIT_INTRO : 0,
 				ORBIT_PLACING : 1,
 				ORBIT_WINDUP : 2,
 				ORBIT_ACTIVE : 3,
@@ -89,55 +90,60 @@
 				for (var i = 0; i < thrownObjects.length; ++i) {
 					var obj = thrownObjects[i];
 
-					var curPos = obj.pos;
-					var curVel = obj.vel;
-					var planetPos = planet.pos;
+					if (gameState == GameState.ORBIT_ACTIVE) {
+						var curPos = obj.pos;
+						var curVel = obj.vel;
+						var planetPos = planet.pos;
 
-					var prevDir = direction(planetPos, curPos);
+						var prevDir = direction(planetPos, curPos);
 
-					var dist = distance(curPos, planetPos);
-					var dir = direction(curPos, planetPos);
-					var force = 3000.0 / ((dist * dist) + 500.0);
+						var dist = distance(curPos, planetPos);
+						var dir = direction(curPos, planetPos);
+						var force = 3000.0 / ((dist * dist) + 500.0);
 
-					if (dist > maxDistance) {
-						thrownObjects = [];
-					}
+						if (dist > maxDistance) {
+							thrownObjects = [];
+						}
 
-					curVel[0] += dir[0] * force;
-					curVel[1] += dir[1] * force;
+						curVel[0] += dir[0] * force;
+						curVel[1] += dir[1] * force;
 
-					curPos[0] += curVel[0];
-					curPos[1] += curVel[1];
+						curPos[0] += curVel[0];
+						curPos[1] += curVel[1];
 
-					// Cheat here a little bit to make the mechanics more interesting.
-					// Basically, dampen the velocity away from the planet.
-					// This forces the orbit into a spiral, but avoids the ease of putting the object into
-					// an elliptical orbit, rewarding more circular orbits.
-					var velDir = normalize(curVel);
-					var otherDir = direction(planetPos, curPos);
-					var dampenFactor = Math.max(velDir[0] * otherDir[0] + velDir[1] * otherDir[1], 0) * 0.05;
-					curVel[0] = curVel[0] - curVel[0] * dampenFactor;
-					curVel[1] = curVel[1] - curVel[1] * dampenFactor;
+						// Cheat here a little bit to make the mechanics more interesting.
+						// Basically, dampen the velocity away from the planet.
+						// This forces the orbit into a spiral, but avoids the ease of putting the object into
+						// an elliptical orbit, rewarding more circular orbits.
+						var velDir = normalize(curVel);
+						var otherDir = direction(planetPos, curPos);
+						var dampenFactor = Math.max(velDir[0] * otherDir[0] + velDir[1] * otherDir[1], 0) * 0.05;
+						curVel[0] = curVel[0] - curVel[0] * dampenFactor;
+						curVel[1] = curVel[1] - curVel[1] * dampenFactor;
 
-					// Add the accumulated travelled distance.
-					var angle = Math.acos(otherDir[0] * prevDir[0] + otherDir[1] * prevDir[1]);
-					obj.degreesAccum = obj.degreesAccum + angle;
+						// Add the accumulated travelled distance.
+						var angle = Math.acos(otherDir[0] * prevDir[0] + otherDir[1] * prevDir[1]);
+						obj.degreesAccum = obj.degreesAccum + angle;
 
-					var collideDist = distance(curPos, planetPos);
-					if (collideDist < obj.radius + planet.radius) {
-						thrownObjects = [];
-
-						gameState = GameState.ORBIT_PLACING;
-
-						// TODO: Some sweet effect here.
-						thrownObject = {
-							radius : 7,
-							pos : [ 0, 0 ],
-							vel : [ 0, 0 ],
-							degreesAccum : 0
-						};
+						var collideDist = distance(curPos, planetPos);
+						if (collideDist < obj.radius + planet.radius) {
+							gameState = GameState.ORBIT_FINISHED;
+							jostleSun(function() {
+								thrownObjects = [];
+							});
+						}
 					}
 				}
+			}
+
+			function jostleSun(completeBlock) {
+				var originalPos = planet.pos;
+				var newPos = [ originalPos[0] + 20, originalPos[1] + 20 ];
+
+				var interval = window.setInterval(function() {
+					var currentPos = planet.pos;
+					planet.pos = [ planet.pos[0] + 0.9, planet.pos[1] + 0.9 ];
+				}, 33);
 			}
 
 			function scaleNumberLabel(scaleVal, completeBlock, rate) {
@@ -303,7 +309,7 @@
 			}
 
 			function initializeGameVars() {
-				gameState = GameState.ORBIT_PLACING;
+				gameState = GameState.ORBIT_INTRO;
 				mousePos = [ -20, -20 ];
 				mouseDownPos = [ 0, 0 ];
 				maxLength = 80;
@@ -336,7 +342,7 @@
  				window.setTimeout(function() { fadeIn(ins2); }, instructionsStart + 1000);
  				window.setTimeout(function() { fadeOut(ins1); }, instructionsStart + 1200);
  				window.setTimeout(function() { fadeOut(ins2); }, instructionsStart + 2000);
- 				window.setTimeout(function() { fadeOut(titleLabel); }, instructionsStart + 2500);
+ 				window.setTimeout(function() { fadeOut(titleLabel); gameState = GameState.ORBIT_PLACING; }, instructionsStart + 2500);
 
  				initializeGameVars();
  				planet.pos = [ canvas.width / 2, canvas.height / 2 ];
