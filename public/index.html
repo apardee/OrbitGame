@@ -2,6 +2,7 @@
 	<head>
 		<title>orbit</title>
 		<script>
+			// Game loop shim.
 			var requestAnimFrame = (function(){
 			      return  window.requestAnimationFrame       || 
 			              window.webkitRequestAnimationFrame || 
@@ -9,16 +10,9 @@
 			              window.oRequestAnimationFrame      || 
 			              window.msRequestAnimationFrame     || 
 			              function(callback) {
-			              		window.setTimeout(callback, 1000 / 60);
+			              		window.setTimeout(callback, 1000 / 30);
 			              };
 			})();
-
-			// Array Remove - By John Resig (MIT Licensed)
-			Array.prototype.remove = function(from, to) {
-				var rest = this.slice((to || from) + 1 || this.length);
-				this.length = from < 0 ? this.length + from : from;
-				return this.push.apply(this, rest);
-			};
 
 			var GameState = {
 				ORBIT_INTRO : 0,
@@ -136,32 +130,69 @@
 				}
 			}
 
-			function jostleSun(completeBlock) {
-				var originalPos = planet.pos;
-				var newPos = [ originalPos[0] + 20, originalPos[1] + 20 ];
+			function interp(initial, fin, time, completeBlock) {
+				var initialPos = [ initial[0], initial[1] ];
+				var elapsed = 0;
 
 				var interval = window.setInterval(function() {
-					var currentPos = planet.pos;
-					planet.pos = [ planet.pos[0] + 0.9, planet.pos[1] + 0.9 ];
+					elapsed += 33;
+					if (elapsed >= time) {
+						window.clearInterval(interval);
+						elapsed = time;
+						if (completeBlock) {
+							completeBlock();
+						}
+					}
+
+					var ratio = elapsed / time;
+					initial[0] = initialPos[0] + (fin[0] - initialPos[0]) * ratio;
+					initial[1] = initialPos[1] + (fin[1] - initialPos[1]) * ratio;
+
 				}, 33);
+			}
+
+			function jostleSun(completeBlock) {
+				var originalPos = planet.pos;
+				var jostleRadius = 10.0;
+
+				var jostlePoint = function() {
+					var jostleOffsetX = Math.random() * (jostleRadius * 2) - jostleRadius;
+					var jostleOffsetY = Math.random() * (jostleRadius * 2) - jostleRadius;
+					return [ originalPos[0] + jostleOffsetX, originalPos[1] + jostleOffsetY ];
+				}
+
+				var newPos = [ originalPos[0] + 5, originalPos[1] + 5 ];
+				var interval = 45;
+
+				var pts = [];
+				for (var i = 0; i < 5; ++i) {
+					pts.push(jostlePoint());
+				}
+				
+				var ptIndex = 0;
+				var nextPoint = function() {
+					if (ptIndex < pts.length) {
+						interp(planet.pos, pts[ptIndex], interval, nextPoint);
+						ptIndex++;
+					}
+				}
+				nextPoint();
 			}
 
 			function scaleNumberLabel(scaleVal, completeBlock, rate) {
 				rate = rate || 0.08;
 
+				var originalScale = fontSizeScale;
+				if (fontSizeScale >= scaleVal) {
+					rate *= -1;
+				}
+
 				var interval = window.setInterval(function() {
 					var complete = false;
-					if (fontSizeScale < scaleVal) {
-						fontSizeScale += rate;
-						if (fontSizeScale >= scaleVal) {
-							complete = true;
-						}
-					}
-					else {
-						fontSizeScale -= rate;
-						if (fontSizeScale <= scaleVal) {
-							complete = true;
-						}
+					fontSizeScale += rate;
+					if ((rate >= 0 && fontSizeScale >= scaleVal) ||
+					 	(rate < 0 && fontSizeScale < scaleVal)) {
+						complete = true;
 					}
 
 					if (complete) {
