@@ -82,5 +82,5 @@ func main() {
 	http.HandleFunc("/scores", HandleScore)
 
 	fmt.Println("Began serving requests at: 127.0.0.1:4000")
-	http.ListenAndServe("localhost:4000", nil)
+	http.ListenAndServe(":4000", nil)
 }

@@ -110,22 +110,37 @@
 						gameState = GameState.ORBIT_FINISHED;
 						finalScore = revolutions =  thrownObject.degreesAccum / (2 * Math.PI);
 						thrownObject = null;
-						jostleSun(function() {
-							window.setTimeout(function() {
-								scaleNumberLabel(5.0, function() {}, 0.3, 0.02);
-								animateLabel();
-							}, 200);
-						});
+						jostleSun(function() {});
+						
+						scaleNumberLabel(5.0, function() {
+							scaleNumberLabel(1.0, function() {
+								gameState = GameState.ORBIT_PLACING;
+								thrownObject = {
+									radius : 7,
+									pos : [ 0, 0 ],
+									vel : [ 0, 0 ],
+									degreesAccum : 0
+								};
+							}, 0.3, 0.02);
+							animateLabel("cc", "22");
+						}, 0.3, 0.02);
+						animateLabel("22", "cc");
 					}
 				}
 			}
 
-			function animateLabel() {
-				var currentVal = parseInt("22", 16);
-				var maxVal = parseInt("cc", 16);
+			function animateLabel(fromColor, toColor) {
+				var rate = 25;
+				var currentVal = parseInt(fromColor, 16);
+				var maxVal = parseInt(toColor, 16);
+				if (maxVal < currentVal) {
+					rate *= -1;
+				}
+
 				var interval = window.setInterval(function() {
-					currentVal += 10;
-					if (currentVal >= maxVal) {
+					currentVal += rate;
+					if ((rate > 0 && currentVal >= maxVal) ||
+						(rate < 0 && currentVal <= maxVal)) {
 						window.clearInterval(interval);
 						currentVal = maxVal;
 					}
@@ -346,6 +361,7 @@
 				var lengthScale = 0.05;
 				if (gameState == GameState.ORBIT_WINDUP) {
 					gameState = GameState.ORBIT_ACTIVE;
+					finalScore = null;
 
 					var dir = direction(mousePos, mouseDownPos);
 					var len = Math.min(distance(mousePos, mouseDownPos) * lengthScale, maxLength);
