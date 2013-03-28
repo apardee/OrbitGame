@@ -35,6 +35,12 @@
 			var lastRevolutions = -1;
 			var labelColor = "#222222";
 
+			var highScores = {
+				today : 5,
+				allTime : 25,
+				local : 0
+			};
+
 			// Initialize the game objects.
 			var thrownObject;
 
@@ -335,6 +341,54 @@
 					context.textBaseline = 'middle';
 					context.fillText(revolutions.toFixed(0), planet.pos[0], planet.pos[1]);
 				}
+
+
+				// Score Drawing
+				{
+					var offset = 55;
+					var radius = 40;
+					var scorePos1 = [ canvas.width - offset, canvas.height - offset ];
+					var scorePos2 = [ offset, canvas.height - offset ];
+
+					context.fillStyle = "#dddddd";
+					context.strokeStyle = "#dddddd";
+
+					context.beginPath();
+					context.arc(scorePos1[0], scorePos1[1], radius, 0, Math.PI * 2, true); 
+					context.closePath();
+					context.fill();
+
+					context.beginPath();
+					context.arc(scorePos1[0], scorePos1[1], radius + 5, 0, Math.PI * 2, true); 
+					context.closePath();
+					context.stroke();
+
+					context.beginPath();
+					context.arc(scorePos2[0], scorePos2[1], radius, 0, Math.PI * 2, true); 
+					context.closePath();
+					context.fill();
+
+					context.beginPath();
+					context.arc(scorePos2[0], scorePos2[1], radius + 5, 0, Math.PI * 2, true); 
+					context.closePath();
+					context.stroke();
+
+					context.fillStyle = "#222222";
+					context.font = "30px Impact";
+					context.textAlign = 'center';
+					context.textBaseline = 'middle';
+
+					context.fillText(highScores.local, scorePos1[0], scorePos1[1]);
+					context.fillText(highScores.today, scorePos2[0], scorePos2[1]);
+
+					context.fillStyle = "#222222";
+					context.font = "10px Helvetica-Bold";
+					context.textAlign = 'center';
+					context.textBaseline = 'middle';
+
+					context.fillText("high today", scorePos1[0], scorePos1[1] + 20);
+					context.fillText("your high", scorePos2[0], scorePos2[1] + 20);
+				}
 			}
 
 			function handleMouseMove(mouseMoveEvent) {
@@ -453,11 +507,6 @@
 			<div id="titleLabel" style="position:absolute; top:0px; left:0px; color:#dddddd; font-size:80px; font-family:Impact; width:100%; text-align:center; opacity:0;">orbit</div>
 			<div id="instructionsLabel1" style="font-family:HelveticaNeue-Light; position:absolute; top:100px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">put your planet in orbit</div>
 			<div id="instructionsLabel2" style="font-family:HelveticaNeue-Light; position:absolute; top:120px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">keep it there as long as you can</div>
-			<!--<div id="scoreContainer" style="position:absolute; top:0px; left:0px; opacity:0; text-align:right; width:100%;">
-				<div id="highScore" style="color:#dddddd; font-size:105px; font-family:Impact; width:70px;"></div>
-				<div id="highScoreLabel" style="font-size:12; font-weight:condensed; top:50px; color:#dddddd; background-color:#222222; text-align:center; width:70px; height:25px;">Revolutions</div>
-				<div id="planetsLeft" style="color:white; font-size:105px; font-family:Impact;"></div>
-			</div>-->
 			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white; opacity:0;"></canvas>
 		</div>
 	</body>

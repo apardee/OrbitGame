@@ -25,7 +25,7 @@ func HandleScore(w http.ResponseWriter, req *http.Request) {
 
 	outVal, err := redis.Bytes(conn.Do("GET", "highScore:value"))
 	if err != nil {
-		return	
+		return
 	}
 
 	highScore, err := strconv.ParseFloat(string(outVal), 64)
