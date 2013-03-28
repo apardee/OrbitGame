@@ -114,9 +114,20 @@
 					var collideDist = distance(curPos, planetPos);
 					if (collideDist < obj.radius + planet.radius) {
 						gameState = GameState.ORBIT_FINISHED;
-						finalScore = revolutions =  thrownObject.degreesAccum / (2 * Math.PI);
+						finalScore = thrownObject.degreesAccum / (2 * Math.PI);
+						finalScore = Math.floor(finalScore);
+
 						thrownObject = null;
-						jostleSun(function() {});
+						jostleSun();
+
+						// Set new high scores if it applies.
+						if (finalScore > highScores.today) {
+							highScores.today = finalScore;
+						}
+
+						if (finalScore > highScores.local) {
+							highScores.local = finalScore;
+						}
 						
 						scaleNumberLabel(5.0, function() {
 							scaleNumberLabel(1.0, function() {
@@ -303,6 +314,7 @@
 					context.lineWidth = 3;
 					context.moveTo(mouseDownPos[0], mouseDownPos[1]);
 					context.lineTo(endPos[0], endPos[1]);
+					context.closePath();
 					context.stroke();
 				}
 
@@ -346,32 +358,28 @@
 				// Score Drawing
 				{
 					var offset = 55;
-					var radius = 40;
+					var radius = 35;
 					var scorePos1 = [ canvas.width - offset, canvas.height - offset ];
 					var scorePos2 = [ offset, canvas.height - offset ];
 
 					context.fillStyle = "#dddddd";
 					context.strokeStyle = "#dddddd";
+					context.lineWidth = 2;
 
-					context.beginPath();
-					context.arc(scorePos1[0], scorePos1[1], radius, 0, Math.PI * 2, true); 
-					context.closePath();
-					context.fill();
+					function drawScoreBubble(pos) {
+						context.beginPath();
+						context.arc(pos[0], pos[1], radius, 0, Math.PI * 2, true); 
+						context.closePath();
+						context.fill();
 
-					context.beginPath();
-					context.arc(scorePos1[0], scorePos1[1], radius + 5, 0, Math.PI * 2, true); 
-					context.closePath();
-					context.stroke();
+						context.beginPath();
+						context.arc(pos[0], pos[1], radius + 5, 0, Math.PI * 2, true); 
+						context.closePath();
+						context.stroke();
+					}
 
-					context.beginPath();
-					context.arc(scorePos2[0], scorePos2[1], radius, 0, Math.PI * 2, true); 
-					context.closePath();
-					context.fill();
-
-					context.beginPath();
-					context.arc(scorePos2[0], scorePos2[1], radius + 5, 0, Math.PI * 2, true); 
-					context.closePath();
-					context.stroke();
+					drawScoreBubble(scorePos1);
+					drawScoreBubble(scorePos2);
 
 					context.fillStyle = "#222222";
 					context.font = "30px Impact";
@@ -382,12 +390,12 @@
 					context.fillText(highScores.today, scorePos2[0], scorePos2[1]);
 
 					context.fillStyle = "#222222";
-					context.font = "10px Helvetica-Bold";
+					context.font = "9px Helvetica-Bold";
 					context.textAlign = 'center';
 					context.textBaseline = 'middle';
 
-					context.fillText("high today", scorePos1[0], scorePos1[1] + 20);
-					context.fillText("your high", scorePos2[0], scorePos2[1] + 20);
+					context.fillText("high today", scorePos1[0], scorePos1[1] + 19);
+					context.fillText("your high", scorePos2[0], scorePos2[1] + 19);
 				}
 			}
 
