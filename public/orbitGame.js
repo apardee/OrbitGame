@@ -21,32 +21,34 @@ var GameState = {
 
 var GameVars = {
 	gameState : GameState.ORBIT_INTRO,
-	mousePos : [ 0, 0 ]
+
+	mousePos : [ 0, 0 ],
+	mouseDownPos : [ 0, 0 ],
+	mouseUpPos : [ 0, 0 ],
+
+	maxLength : 80,
+	maxDistance : 2000,
+
+	iterations : 0,
+	finalScore : 0,
+
+	fontSizeScale : 1.0,
+	lastRevolutions : -1,
+	labelColor : "#222222",
+
+	planet : {
+		radius : 50,
+		pos : [ 0, 0 ],
+		img : null
+	},
+
+	thrownObject : null
 };
 
-var mouseDownPos;
-var maxLength;
-var maxDistance;
-var iterations;
-var releasePos;
-var finalScore;
-var fontSizeScale = 1.0;
-var lastRevolutions = -1;
-var labelColor = "#222222";
-
-var highScores = {
+var HighScores = {
 	today : 5,
 	allTime : 25,
 	local : 0
-};
-
-// Initialize the game objects.
-var thrownObject;
-
-var planet = {
-	radius : 50,
-	pos : [ 0, 0 ],
-	img : null
 };
 
 function length(vec) {
@@ -71,18 +73,18 @@ function direction(vec1, vec2) {
 
 function update() {
 	if (GameVars.gameState == GameState.ORBIT_PLACING) {
-		thrownObject.pos = GameVars.mousePos;
+		GameVars.thrownObject.pos = GameVars.mousePos;
 	}
 	else if (GameVars.gameState == GameState.ORBIT_WINDUP) {
-		thrownObject.pos = mouseDownPos;
+		GameVars.thrownObject.pos = GameState.mouseDownPos;
 	}
 
 	if (GameVars.gameState == GameState.ORBIT_ACTIVE) {
-		var obj = thrownObject;
+		var obj = GameVars.thrownObject;
 
 		var curPos = obj.pos;
 		var curVel = obj.vel;
-		var planetPos = planet.pos;
+		var planetPos = GameVars.planet.pos;
 
 		var prevDir = direction(planetPos, curPos);
 
@@ -111,27 +113,27 @@ function update() {
 		obj.degreesAccum = obj.degreesAccum + angle;
 
 		var collideDist = distance(curPos, planetPos);
-		if (collideDist < obj.radius + planet.radius) {
+		if (collideDist < obj.radius + GameVars.planet.radius) {
 			GameVars.gameState = GameState.ORBIT_FINISHED;
-			finalScore = thrownObject.degreesAccum / (2 * Math.PI);
-			finalScore = Math.floor(finalScore);
+			GameVars.finalScore = GameVars.thrownObject.degreesAccum / (2 * Math.PI);
+			GameVars.finalScore = Math.floor(GameVars.finalScore);
 
-			thrownObject = null;
+			GameVars.thrownObject = null;
 			jostleSun();
 
 			// Set new high scores if it applies.
-			if (finalScore > highScores.today) {
-				highScores.today = finalScore;
+			if (GameVars.finalScore > HighScores.today) {
+				HighScores.today = GameVars.finalScore;
 			}
 
-			if (finalScore > highScores.local) {
-				highScores.local = finalScore;
+			if (GameVars.finalScore > HighScores.local) {
+				HighScores.local = GameVars.finalScore;
 			}
 			
 			scaleNumberLabel(5.0, function() {
 				scaleNumberLabel(1.0, function() {
 					GameVars.gameState = GameState.ORBIT_PLACING;
-					thrownObject = {
+					GameVars.thrownObject = {
 						radius : 7,
 						pos : [ 0, 0 ],
 						vel : [ 0, 0 ],
@@ -162,7 +164,7 @@ function animateLabel(fromColor, toColor) {
 		}
 
 		var hexString = currentVal.toString(16);
-		labelColor = "#" + hexString + hexString + hexString;
+		GameVars.labelColor = "#" + hexString + hexString + hexString;
 	}, 33);
 }
 
@@ -188,7 +190,7 @@ function interp(initial, fin, time, completeBlock) {
 }
 
 function jostleSun(completeBlock) {
-	var originalPos = planet.pos;
+	var originalPos = GameVars.planet.pos;
 	var jostleRadius = 10.0;
 
 	var jostlePoint = function() {
@@ -208,11 +210,11 @@ function jostleSun(completeBlock) {
 	var ptIndex = 0;
 	var nextPoint = function() {
 		if (ptIndex < pts.length) {
-			interp(planet.pos, pts[ptIndex], interval, nextPoint);
+			interp(GameVars.planet.pos, pts[ptIndex], interval, nextPoint);
 			ptIndex++;
 		}
 		else {
-			interp(planet.pos, originalPos, interval, function() {
+			interp(GameVars.planet.pos, originalPos, interval, function() {
 				if (completeBlock) {
 					completeBlock();
 				}
@@ -226,17 +228,17 @@ function scaleNumberLabel(scaleVal, completeBlock, rate, decel) {
 	rate = rate || 0.08;
 	decel = decel || 0;
 
-	var originalScale = fontSizeScale;
-	if (fontSizeScale >= scaleVal) {
+	var originalScale = GameVars.fontSizeScale;
+	if (GameVars.fontSizeScale >= scaleVal) {
 		rate *= -1;
 		decel *= -1;
 	}
 
 	var interval = window.setInterval(function() {
 		var complete = false;
-		fontSizeScale += rate;
-		if ((rate >= 0 && fontSizeScale >= scaleVal) ||
-		 	(rate < 0 && fontSizeScale < scaleVal)) {
+		GameVars.fontSizeScale += rate;
+		if ((rate >= 0 && GameVars.fontSizeScale >= scaleVal) ||
+		 	(rate < 0 && GameVars.fontSizeScale < scaleVal)) {
 			complete = true;
 		}
 
@@ -306,12 +308,12 @@ function draw(context) {
 	if (GameVars.gameState == GameState.ORBIT_WINDUP) {
 		context.strokeStyle = "#ffffff";
 
-		var dir = direction(GameVars.mousePos, mouseDownPos);
-		var dist = Math.min(distance(GameVars.mousePos, mouseDownPos), maxLength);
-		var endPos = [ mouseDownPos[0] + dir[0] * dist, mouseDownPos[1] + dir[1] * dist ];
+		var dir = direction(GameVars.mousePos, GameState.mouseDownPos);
+		var dist = Math.min(distance(GameVars.mousePos, GameState.mouseDownPos), GameVars.maxLength);
+		var endPos = [ GameState.mouseDownPos[0] + dir[0] * dist, GameState.mouseDownPos[1] + dir[1] * dist ];
 
 		context.lineWidth = 3;
-		context.moveTo(mouseDownPos[0], mouseDownPos[1]);
+		context.moveTo(GameState.mouseDownPos[0], GameState.mouseDownPos[1]);
 		context.lineTo(endPos[0], endPos[1]);
 		context.closePath();
 		context.stroke();
@@ -321,36 +323,36 @@ function draw(context) {
 	context.strokeStyle = "#00bff3";
 
 	context.lineWidth = 2;
-	if (thrownObject) {
-		drawOrbitPosition(context, thrownObject.pos, thrownObject.radius);
+	if (GameVars.thrownObject) {
+		drawOrbitPosition(context, GameVars.thrownObject.pos, GameVars.thrownObject.radius);
 	}
 
-	if (planet.img) {
-		var planetX = planet.pos[0] - planet.img.width / 2;
-		var planetY = planet.pos[1] - planet.img.height / 2;
-		context.drawImage(planet.img, planetX, planetY);
+	if (GameVars.planet.img) {
+		var planetX = GameVars.planet.pos[0] - GameVars.planet.img.width / 2;
+		var planetY = GameVars.planet.pos[1] - GameVars.planet.img.height / 2;
+		context.drawImage(GameVars.planet.img, planetX, planetY);
 	}
 
-	if (thrownObject || finalScore != null) {
+	if (GameVars.thrownObject || GameVars.finalScore != null) {
 		var revolutions;
-		if (finalScore != null) {
-			revolutions = finalScore;
+		if (GameVars.finalScore != null) {
+			revolutions = GameVars.finalScore;
 		}
 		else {
-			revolutions =  thrownObject.degreesAccum / (2 * Math.PI);
+			revolutions =  GameVars.thrownObject.degreesAccum / (2 * Math.PI);
 			revolutions = Math.floor(revolutions);
-			if (lastRevolutions != revolutions) {
+			if (GameVars.lastRevolutions != revolutions) {
 				pulseFontScale();
-				lastRevolutions = revolutions;
+				GameVars.lastRevolutions = revolutions;
 			}
 		}
 
-		context.fillStyle = labelColor;
-		context.font = (45 * fontSizeScale) + "px Impact";
+		context.fillStyle = GameVars.labelColor;
+		context.font = (45 * GameVars.fontSizeScale) + "px Impact";
 
 		context.textAlign = 'center';
 		context.textBaseline = 'middle';
-		context.fillText(revolutions.toFixed(0), planet.pos[0], planet.pos[1]);
+		context.fillText(revolutions.toFixed(0), GameVars.planet.pos[0], GameVars.planet.pos[1]);
 	}
 
 
@@ -385,8 +387,8 @@ function draw(context) {
 		context.textAlign = 'center';
 		context.textBaseline = 'middle';
 
-		context.fillText(highScores.local, scorePos1[0], scorePos1[1]);
-		context.fillText(highScores.today, scorePos2[0], scorePos2[1]);
+		context.fillText(HighScores.local, scorePos1[0], scorePos1[1]);
+		context.fillText(HighScores.today, scorePos2[0], scorePos2[1]);
 
 		context.fillStyle = "#222222";
 		context.font = "9px Helvetica-Bold";
@@ -414,7 +416,7 @@ function handleMouseMove(mouseMoveEvent) {
 function handleMouseDown() {
 	if (GameVars.gameState == GameState.ORBIT_PLACING) {
 		GameVars.gameState = GameState.ORBIT_WINDUP;
-		mouseDownPos = GameVars.mousePos;
+		GameState.mouseDownPos = GameVars.mousePos;
 	}
 }
 
@@ -422,15 +424,15 @@ function handleMouseUp() {
 	var lengthScale = 0.05;
 	if (GameVars.gameState == GameState.ORBIT_WINDUP) {
 		GameVars.gameState = GameState.ORBIT_ACTIVE;
-		finalScore = null;
+		GameVars.finalScore = null;
 
-		var dir = direction(GameVars.mousePos, mouseDownPos);
-		var len = Math.min(distance(GameVars.mousePos, mouseDownPos) * lengthScale, maxLength);
+		var dir = direction(GameVars.mousePos, GameState.mouseDownPos);
+		var len = Math.min(distance(GameVars.mousePos, GameState.mouseDownPos) * lengthScale, GameVars.maxLength);
 
-		releasePos = thrownObject.pos;
+		GameVars.mouseUpPos = GameVars.thrownObject.pos;
 
-		thrownObject.vel = [ dir[0] * len, dir[1] * len ];
-		mouseDownPos = [ 0, 0 ];
+		GameVars.thrownObject.vel = [ dir[0] * len, dir[1] * len ];
+		GameState.mouseDownPos = [ 0, 0 ];
 	}
 }
 
@@ -443,10 +445,8 @@ function handleWindowResize() {
 function initializeGameVars() {
 	GameVars.gameState = GameState.ORBIT_INTRO;
 	GameVars.mousePos = [ -20, -20 ];
-	mouseDownPos = [ 0, 0 ];
-	maxLength = 80;
-	maxDistance = 2000;
-	iterations = 0;
+	GameState.mouseDownPos = [ 0, 0 ];
+	GameVars.iterations = 0;
 }
 
 function startGame() {
@@ -470,7 +470,7 @@ function startGame() {
 			GameVars.gameState = GameState.ORBIT_PLACING; 
 			
 			// Initialize the game objects.
-		thrownObject = {
+		GameVars.thrownObject = {
 			radius : 7,
 			pos : [ 0, 0 ],
 			vel : [ 0, 0 ],
@@ -480,13 +480,13 @@ function startGame() {
 		}, instructionsStart + 2500);
 
 		initializeGameVars();
-		planet.pos = [ canvas.width / 2, canvas.height / 2 ];
+		GameVars.planet.pos = [ canvas.width / 2, canvas.height / 2 ];
 
 		// Load the planet image.
 		var planetImage = new Image();
 		planetImage.src = "sun.png";
 		planetImage.onload = function() {
-			planet.img = planetImage;
+			GameVars.planet.img = planetImage;
 		}
 
 	var context = canvas.getContext('2d');
