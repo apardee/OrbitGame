@@ -1,0 +1,30 @@
+body {
+	margin-left:0px;
+	margin-top:0px;
+	background-image:url('stars.jpg');
+}
+
+.gameLabel {
+	position:absolute;
+	left:0px;
+	color:#dddddd;
+	width:100%;
+	text-align:center;
+}
+
+.instructionsLabel {
+	font-family:HelveticaNeue-Light;
+	font-size:40px;
+	height:40px;
+}
+
+#titleLabel {
+	top:0px;
+	font-size:80px;
+	font-family:Impact;
+}
+
+#gameBoard {
+	border-width:2px;
+	border-color:white;
+}

@@ -1,4 +1,4 @@
-//(function() {
+var GameEntry = (function() {
 
 var requestAnimFrame = (function(){
       return  window.requestAnimationFrame       || 
@@ -428,6 +428,10 @@ function handleMouseUp() {
 
 		var dir = direction(GameVars.mousePos, GameState.mouseDownPos);
 		var len = Math.min(distance(GameVars.mousePos, GameState.mouseDownPos) * lengthScale, GameVars.maxLength);
+		if (len <= 0) {
+			dir = [ 1, 0 ];
+			len = 0.01;
+		}
 
 		GameVars.mouseUpPos = GameVars.thrownObject.pos;
 
@@ -508,4 +512,6 @@ function startGame() {
 	requestAnimFrame(animFrameLoop);
 }
 
-//})();
+	return startGame;
+
+})();

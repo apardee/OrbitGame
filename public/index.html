@@ -2,13 +2,14 @@
 	<head>
 		<title>orbit</title>
 		<script src="orbitGame.js"></script>
+		<link rel="stylesheet" type="text/css" href="orbitStyle.css" />
 	</head>
-	<body onload="startGame();" style="margin-left:0px; margin-top:0px; background-image:url('stars.jpg');">
+	<body onload="GameEntry();">
 		<div style="font-family:Helvetica; align:center;">
-			<div id="titleLabel" style="position:absolute; top:0px; left:0px; color:#dddddd; font-size:80px; font-family:Impact; width:100%; text-align:center; opacity:0;">orbit</div>
-			<div id="instructionsLabel1" style="font-family:HelveticaNeue-Light; position:absolute; top:100px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">put your planet in orbit</div>
-			<div id="instructionsLabel2" style="font-family:HelveticaNeue-Light; position:absolute; top:120px; left:0px; color:#dddddd; font-size:40px; width:100%; text-align:center; height:40px; opacity:0;">keep it there as long as you can</div>
-			<canvas id="gameBoard" width="500" height="500" style="border-width:2px; border-color:white; opacity:0;"></canvas>
+			<div id="titleLabel" class="gameLabel" style="opacity:0;">orbit</div>
+			<div id="instructionsLabel1" class="gameLabel instructionsLabel" style="opacity:0; top:100px;">put your planet in orbit</div>
+			<div id="instructionsLabel2" class="gameLabel instructionsLabel" style="opacity:0; top:120px;">keep it there as long as you can</div>
+			<canvas id="gameBoard" width="500" height="500" style="opacity:0;"></canvas>
 		</div>
 	</body>
 </html>
